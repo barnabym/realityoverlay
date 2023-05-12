@@ -11,7 +11,7 @@
     <style>
    /* Base styles */
 nav {
-  background-color: #333;
+  background-color: #ff253a !important;
 }
 
 .menu {
@@ -23,7 +23,7 @@ nav {
 }
 
 .menu li {
-  margin: 0 10px;
+  margin: 10px 10px;
 }
 
 .menu li a {
@@ -34,7 +34,7 @@ nav {
 }
 
 .menu li a i {
-  margin-right: 5px;
+  margin-right: 0px;
 }
 
 /* Responsive styles */
@@ -49,15 +49,58 @@ nav {
   }
 }
 
+.menu-box {
+    position: absolute;
+    background-color: #ff253a !important;
+    color: #ffffff;
+    left: 0px;
+    top: 0px;
+    width:100%;
+    height: 40px;
+    background: white;
+    /* padding: 10px; */
+}
 
-      .info-box {
-          position: absolute;
-          left: 10px;
-          top: 10px;
-          width: 200px;
-          background: white;
-          padding: 10px;
-      }
+
+.info-box {
+    position: absolute;
+    background-color: #ff253a !important;
+    color: #fff;
+    left: 10px;
+    top: 70px;
+    width: 250px;
+    background: white;
+    padding: 10px;
+}
+
+.contact-us-box {
+    position: absolute;
+    background-color: #ff253a !important;
+    color: #fff;
+    left: 10px;
+    top: 70px;
+    width: 250px;
+    background: white;
+    padding: 10px;
+}
+
+.services {
+    position: absolute;
+    background-color: #ff253a !important;
+    color: #fff;
+    left: 10px;
+    top: 70px;
+    width: 250px;
+    text-decoration: 'none';
+    background: white;
+    padding: 10px;
+}
+a {
+
+    color: white !important;
+    text-decoration: 'none' !important;
+
+}
   </style>
     
     <!-- import the webpage's stylesheet -->
@@ -84,10 +127,10 @@ nav {
     <!-- <script src="https://cdn.jsdelivr.net/npm/aframe-animation-component@5.1.2/dist/aframe-animation-component.min.js"></script> -->
     <script src="https://unpkg.com/aframe-event-set-component@3.0.x/dist/aframe-event-set-component.min.js"></script>
 
-    <script src="https://threejs.org/examples/jsm/postprocessing/EffectComposer.js"></script>
+    <!-- <script src="https://threejs.org/examples/jsm/postprocessing/EffectComposer.js"></script>
     <script src="https://threejs.org/examples/jsm/postprocessing/RenderPass.js"></script>
-    <script src="https://threejs.org/examples/jsm/postprocessing/GlitchPass.js"></script>
-    <script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/GlitchPass.js"></script>-->
+    <script> 
       var tween = null;
       // Define a few custom components useful for AR mode. While these are somewhat reusable,
       // I recommend checking if there are officially supported alternatives before copying
@@ -247,34 +290,26 @@ AFRAME.registerComponent('thumbstick-logging',{
             }
         }
       });
-
+  function aboutUs(){
+    document.getElementsByClassName('info-box')[0].style.display="block";
+    document.getElementsByClassName('contact-us-box')[0].style.display="none";
+    document.getElementsByClassName('services')[0].style.display="none";
+  }
+  function contactUs(){
+    document.getElementsByClassName('info-box')[0].style.display="none";
+    document.getElementsByClassName('contact-us-box')[0].style.display="block";
+    document.getElementsByClassName('services')[0].style.display="none";
+  }
+  function services(){
+    document.getElementsByClassName('info-box')[0].style.display="none";
+    document.getElementsByClassName('contact-us-box')[0].style.display="none";
+    document.getElementsByClassName('services')[0].style.display="block";
+  }
   </script>
   </head>  
   <body>
 
-    <nav>
-      <ul>
-          <li><a href="#home">Home</a></li>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#contact">Contact</a></li>
-      </ul>
-  </nav>
-
-  <nav>
-    <ul class="menu">
-      <li><a href="#"><i class="fas fa-address-book"></i> Contacts</a></li>
-      <li><a href="#"><i class="fas fa-headphones"></i> Headset</a></li>
-      <li><a href="#"><i class="fas fa-briefcase"></i> Portfolio</a></li>
-      <li><a href="#"><i class="fas fa-user"></i> About Us</a></li>
-    </ul>
-  </nav>
-
-  <div class="info-box">
-    Reality Overlay specializes in building immersive Mixed Reality (MR) and Augmented Reality (AR) websites. Transform your online presence with us.
-</div>
-
-
+    
     <a-scene background="color: gray" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
         <!-- <a-scene background="color: gray" embedded nav-mesh-strategy> -->
 
@@ -295,13 +330,13 @@ AFRAME.registerComponent('thumbstick-logging',{
                 </a-entity>
             </a-entity>  -->
 
-            <a-entity id="container" position="30 1 -2"
+            <a-entity id="container" position="-30 3 -30"
                 animation__scale="property: scale; dir: alternate; dur: 200;
                                   easing: easeInSine; loop: true; from: 1 1 1; to: 1.2 1 1.2;
                                   startEvents: scale; pauseEvents: animationPause;
                                   resumeEvents: animationResume; restartEvents: animationRestart"
                 animation__position="property: position; dir: alternate; dur: 10000;
-                                     easing: easeInSine; loop: true; from: 30 1 -2; to: 2 1 -2;"
+                                     easing: easeInSine; loop: true; from: -30 3 -30; to: 30 10 -30"
                 animation__color="property: color; dir: alternate; dur: 1000;
                                   easing: easeInSine; loop: true; to: #5F5;
                                   startEvents: color; pauseEvents: animationPause;
@@ -309,8 +344,8 @@ AFRAME.registerComponent('thumbstick-logging',{
                                   >
             
 
-                <a-entity id="sharkModel" position="0 8 0" scale="2 2 2">
-                    <a-entity id="sharkEvents"  position="0 0 0" rotation="0 260 0"
+                <a-entity id="sharkModel" position="0 0 0" scale="2 2 2">
+                    <a-entity id="sharkEvents"  position="0 0 0" rotation="0 0 0"
                         gltf-model="#shark"
                         animation-mixer
                         shadow="cast: false; receive: false">
@@ -381,6 +416,8 @@ AFRAME.registerComponent('thumbstick-logging',{
         </a-entity> -->
     
     </a-assets>
+
+
 <!-- 
     <a-entity oculus-touch-controls="hand: left" thumbstick-logging x-button-listener></a-entity>
     <a-entity oculus-touch-controls="hand: right" thumbstick-logging x-button-listener></a-entity> -->
@@ -435,10 +472,40 @@ AFRAME.registerComponent('thumbstick-logging',{
                visible="false"></a-plane>
       </a-scene>
 
+
+
+
+      <div class="menu-box">
+        <nav>
+            <ul class="menu">
+                <li><a href="#" onclick="aboutUs();return false;" ><i class="fas fa-user"></i>&nbsp;About Us</a></li>
+                <li><a href="#" onclick="services();return false;"><i class="fas fa-robot"></i>&nbsp;Services</a></li>
+                <li><a href="#" onclick="contactUs();return false;"><i class="fas fa-address-book"></i>&nbsp;Contacts</a></li>
+              
+              
+            </ul>
+          </nav>
+        </div>
+    
       <div class="info-box">
-        Reality Overlay specializes in building immersive Mixed Reality (MR) and Augmented Reality (AR) websites. Transform your online presence with us.
+        <p>Reality Overlay specializes in building immersive Mixed Reality (MR) and Augmented Reality (AR) websites. Transform your online presence with us.</p>
     </div>
-    <script>
+    
+    <div class="contact-us-box" style="display: none;">
+        <p>Please contact us by email to <a href="mailto://contactqueries@realityoverlay.com">contactqueries@realityoverlay.com</a>.</p>
+    </div>
+    
+    <div class="services" style="display: none;">
+        <p>We offer the following services:</p>
+        <ul>
+            <li>MR/AR mobile apps or websites. </li>
+            <li>AI chatbots and AI driven characters.</li>
+        </ul>
+    </div>
+
+    <!-- <a-scene loading-screen="dotsColor: green; backgroundColor: black"></a-scene>
+      -->
+    <script >
       function moveSharkAuto() {
         var currentPosition = document.getElementById('shark').setAttribute('position');
         console.log("currentPositiojn",currentPosition);
