@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reality Overlay</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+        }
+
+        nav {
+            background-color: #000;
+            border-bottom: 2px solid #0f0;
+        }
+
+        nav ul {
+            padding: 0;
+            list-style-type: none;
+        }
+
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+
+        nav ul li a {
+            color: #0f0;
+            text-decoration: none;
+        }
+
+        nav ul li a:hover {
+            color: #00f;
+        }
+
+        .info-box {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            width: 200px;
+            background: white;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <div class="info-box">
+        Reality Overlay specializes in building immersive Mixed Reality (MR) and Augmented Reality (AR) websites. Transform your online presence with us.
+    </div>
+
+    <a-scene>
+        <a-box position="0 2 -5" rotation="0 0 0" color="#4CC3D9" animation="property: rotation; to: 360 360 360; loop: true; dur: 10000"></a-box>
+        <a-sky color="#ECECEC"></a-sky>
+    </a-scene>
+
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/EffectComposer.js"></script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/RenderPass.js"></script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/GlitchPass.js"></script>
+    <script>
+        // Add your JavaScript here
+        // Please note that integrating THREE.js with A-Frame is a complex task and goes beyond the scope of this example
+    </script>
+</body>
+</html>
