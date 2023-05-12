@@ -1,0 +1,74 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Khronos Group glTF Validator",
+    "minVersion": "2.0",
+    "maxVersion": "2.0"
+  },
+  "buffers": [
+    {
+      "name": "Buffer",
+      "byteLength": 120000,
+      "byteOffset": 0,
+      "type": "arraybuffer",
+      "data": "eJxjYBgIIBADAA..."
+    }
+  ],
+  "materials": [
+    {
+      "name": "Material",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [1.0, 1.0, 1.0, 1.0],
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": "TEXCOORD_0"
+        },
+        "metallicFactor": 1.0,
+        "roughnessFactor": 1.0
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Mesh",
+      "primitives": [
+        {
+          "attributes": [
+            {
+              "name": "POSITION",
+              "type": "float32",
+              "count": 3
+            },
+            {
+              "name": "NORMAL",
+              "type": "float32",
+              "count": 3
+            },
+            {
+              "name": "TEXCOORD_0",
+              "type": "float32",
+              "count": 2
+            }
+          ],
+          "indices": {
+            "buffer": "Buffer",
+            "byteOffset": 12000,
+            "count": 36
+          }
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "Texture",
+      "image": {
+        "bufferView": "Buffer",
+        "byteOffset": 0,
+        "width": 256,
+        "height": 256,
+        "format": "RGBA8"
+      }
+    }
+  ]
+}

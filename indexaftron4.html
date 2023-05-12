@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Reality Overlay</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body {
+          background-color: #000;
+          color: #0f0;
+          font-family: 'Courier New', monospace;
+      }
+
+      nav {
+          background-color: #000;
+          border-bottom: 2px solid #0f0;
+      }
+
+      nav ul {
+          padding: 0;
+          list-style-type: none;
+      }
+
+      nav ul li {
+          display: inline;
+          margin-right: 10px;
+      }
+
+      nav ul li a {
+          color: #0f0;
+          text-decoration: none;
+      }
+
+      nav ul li a:hover {
+          color: #00f;
+      }
+
+      .info-box {
+          position: absolute;
+          left: 10px;
+          top: 10px;
+          width: 200px;
+          background: white;
+          padding: 10px;
+      }
+  </style>
+    
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <script>
+      // WebXR requires HTTPS, so the site doesn't work if someone manually enters
+      // the URL and ends up using HTTP. To work around this, force redirect from
+      // http to https for non-localhost addresses.
+      if (window.location.protocol == "http:" &&
+          window.location.hostname != "localhost" && 
+          window.location.hostname != "127.0.0.1" &&
+          window.location.hostname != "[::1]") {
+        window.location = window.location.href.replace('http:', 'https:');        
+      }
+    </script>    
+    
+    <!-- import the webpage's javascript files -->
+    <script src="https://aframe.io/releases/1.0.3/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-extras@3.3.0/dist/aframe-extras.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.1.0/dist/aframe-environment-component.min.js"></script>
+    <!-- <script src="https://rawgit.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/aframe-animation-component@5.1.2/dist/aframe-animation-component.min.js"></script> -->
+    <script src="https://unpkg.com/aframe-event-set-component@3.0.x/dist/aframe-event-set-component.min.js"></script>
+
+    <script src="https://threejs.org/examples/jsm/postprocessing/EffectComposer.js"></script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/RenderPass.js"></script>
+    <script src="https://threejs.org/examples/jsm/postprocessing/GlitchPass.js"></script>
+    <script>
+      var tween = null;
+      // Define a few custom components useful for AR mode. While these are somewhat reusable,
+      // I recommend checking if there are officially supported alternatives before copying
+      // these into new projects.
+    
+      // See also https://github.com/aframevr/aframe/pull/4356
+AFRAME.registerComponent('hide-in-ar-mode', {
+        // Set this object invisible while in AR mode.
+        init: function () {
+          this.el.sceneEl.addEventListener('enter-vr', (ev) => {
+            this.wasVisible = this.el.getAttribute('visible');
+            if (this.el.sceneEl.is('ar-mode')) {
+              this.el.setAttribute('visible', false);
+            }
+          });
+          this.el.sceneEl.addEventListener('exit-vr', (ev) => {
+            if (this.wasVisible) this.el.setAttribute('visible', true);
+          });
+        }
+      });
+
+      /**
+ * Listen to an event.
+ * When that event is emitted, emit an event on another entity.
+ */
+AFRAME.registerComponent('event-proxy', {
+  schema: {
+    listen: {default: ''},
+    target: {type: 'selector'},
+    emit: {default: ''}
+  },
+
+  update: function () {
+    var data = this.data;
+    this.el.addEventListener(data.listen, function () {
+      data.target.emit(data.emit);
+    });
+  }
+});
+
+AFRAME.registerComponent('wireframe', {
+   dependencies: ['material'],
+   init: function () {
+     this.el.components.material.material.wireframe = true;
+   }
+ });
+
+ AFRAME.registerComponent('collider-check', {
+  dependencies: ['raycaster'],
+
+  init: function () {
+    this.el.addEventListener('raycaster-intersection', function () {
+      console.log('Player hit something!');
+    });
+  }
+});
+
+  
+AFRAME.registerComponent('ar-shadows', {
+        // Swap an object's material to a transparent shadows-only material while
+        // in AR mode. Intended for use with a ground plane. The object is also
+        // set visible while in AR mode, this is useful if it's hidden in other
+        // modes due to them using a 3D environment.
+        schema: {
+          opacity: {default: 0.3}
+        },
+        init: function () {
+          this.el.sceneEl.addEventListener('enter-vr', (ev) => {
+            this.wasVisible = this.el.getAttribute('visible');
+            if (this.el.sceneEl.is('ar-mode')) {
+              this.savedMaterial = this.el.object3D.children[0].material;
+              this.el.object3D.children[0].material = new THREE.ShadowMaterial();
+              this.el.object3D.children[0].material.opacity = this.data.opacity;
+              this.el.setAttribute('visible', true);
+            }
+          });
+          this.el.sceneEl.addEventListener('exit-vr', (ev) => {
+            if (this.savedMaterial) {
+              this.el.object3D.children[0].material = this.savedMaterial;
+              this.savedMaterial = null;
+            }
+            if (!this.wasVisible) this.el.setAttribute('visible', false);
+          });
+        }
+      }); 
+
+AFRAME.registerComponent('x-button-listener', {
+  init: function () {
+    var el = this.el;
+    el.addEventListener('xbuttondown', function (evt) {
+        console.log("x button");
+        setSize(6);
+      el.setAttribute('visible', !el.getAttribute('visible'));
+    });
+  }
+});
+
+// AFRAME.registerComponent('triggerdown-listener', {
+//   init: function () {
+//     var el = this.el;
+//     el.addEventListener('triggerdown', function (evt) {
+//         console.log("trigger");
+//         //el.setAttribute('visible', !el.getAttribute('visible'));
+//         setSize(6);
+//     });
+//   }
+// });
+
+AFRAME.registerComponent('raycaster-listen', {
+	init: function () {
+    // Use events to figure out what raycaster is listening so we don't have to
+    // hardcode the raycaster.
+    this.el.addEventListener('raycaster-intersected', evt => {
+      this.raycaster = evt.detail.el;
+    });
+    this.el.addEventListener('raycaster-intersected-cleared', evt => {
+      this.raycaster = null;
+    });
+  },
+
+  tick: function () {
+    if (!this.raycaster) { return; }  // Not intersecting.
+
+    let intersection = this.raycaster.components.raycaster.getIntersection(this.el);
+    if (!intersection) { return; }
+    setSize(6);
+    console.log(intersection.point);
+  }
+});
+
+
+
+
+
+
+
+AFRAME.registerComponent('thumbstick-logging',{
+        init: function () {
+            this.el.addEventListener('thumbstickmoved', this.logThumbstick);
+        },
+        logThumbstick: function (evt) {
+            if (evt.detail.y > 0.95) { 
+                console.log("DOWN"); 
+                moveSharkUpOrDown(0.1);
+            }
+            if (evt.detail.y < -0.95) { 
+                moveSharkUpOrDown(-0.1);
+                console.log("UP"); 
+            }
+            if (evt.detail.x < -0.95) { 
+                moveSharkLeftOrRight(-0.1);
+                console.log("LEFT"); 
+            }
+            if (evt.detail.x > 0.95) { 
+                moveSharkLeftOrRight(0.1);
+                console.log("RIGHT"); 
+            }
+        }
+      });
+
+  </script>
+  </head>  
+  <body>
+
+    <nav>
+      <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+      </ul>
+  </nav>
+
+  <div class="info-box">
+    Reality Overlay specializes in building immersive Mixed Reality (MR) and Augmented Reality (AR) websites. Transform your online presence with us.
+</div>
+
+
+    <a-scene background="color: gray" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
+        <!-- <a-scene background="color: gray" embedded nav-mesh-strategy> -->
+
+            <a-entity id="mouseCursor" cursor="rayOrigin: mouse"></a-entity>
+
+            <!-- <a-entity id="player" collider-check>
+                <a-entity raycaster="objects: .collidable" position="0 -0.9 0" rotation="90 0 0"></a-entity>
+            </a-entity>
+            
+            <a-entity class="collidable" geometry="primitive: box" position="1 0 0"></a-entity>
+               -->
+
+            <a-entity id="fishModels" position="0 -8 -5" scale="1 1 1">
+                <a-entity  position="0 0 0" rotation="0 0 0"
+                          gltf-model="#fish"
+                          animation-mixer
+                          shadow="cast: false; receive: false">
+                </a-entity>
+            </a-entity> 
+
+            <a-entity id="container" position="30 1 -2"
+                animation__scale="property: scale; dir: alternate; dur: 200;
+                                  easing: easeInSine; loop: true; from: 1 1 1; to: 1.2 1 1.2;
+                                  startEvents: scale; pauseEvents: animationPause;
+                                  resumeEvents: animationResume; restartEvents: animationRestart"
+                animation__position="property: position; dir: alternate; dur: 10000;
+                                     easing: easeInSine; loop: true; from: 30 1 -2; to: 2 1 -2;"
+                animation__color="property: color; dir: alternate; dur: 1000;
+                                  easing: easeInSine; loop: true; to: #5F5;
+                                  startEvents: color; pauseEvents: animationPause;
+                                  resumeEvents: animationResume; restartEvents: animationRestart"
+                                  >
+            
+
+                <a-entity id="sharkModel" position="0 8 0" scale="2 2 2">
+                    <a-entity id="sharkEvents"  position="0 0 0" rotation="0 260 0"
+                        gltf-model="#shark"
+                        animation-mixer
+                        shadow="cast: false; receive: false">
+                    </a-entity>
+                </a-entity> 
+         
+      
+              <!-- Buttons. -->
+              <a-mixin id="option"
+                    position="6 3 -3"
+                    geometry="primitive: box; width: 2; depth: 0.01"
+                    material="color: #FF00FF"
+                    event-proxy="listen: click; target: a-box"
+                    event-set__enter="_event: mouseenter; material.color: #EEE"
+                    event-set__leave="_event: mouseleave; material.color: #333"
+                    text="align: center; width: 4; color: #FFF; zOffset: 0.1">
+              </a-mixin>
+
+           
+
+            </a-entity>
+
+
+
+            <!-- <a-entity id="containerButtons" position="0 1 -2">
+         
+
+      
+            
+              <a-mixin id="option"
+                    position="6 3 -3"
+                    geometry="primitive: box; width: 2; depth: 0.01"
+                    material="color: #FF00FF"
+                    event-proxy="listen: click; target: a-box"
+                    event-set__enter="_event: mouseenter; material.color: #EEE"
+                    event-set__leave="_event: mouseleave; material.color: #333"
+                    text="align: center; width: 4; color: #FFF; zOffset: 0.1">
+              </a-mixin>
+
+              <a-entity layout="type: line; margin: 2.5" position="-2.5 0 0">
+              
+                <a-entity mixin="option" event-proxy="emit: positionEvent" text="value: Position"></a-entity>
+               
+              </a-entity>
+      
+              <a-entity layout="type: line; margin: 2.5" position="-2.5 -1.5 0">
+                <a-entity mixin="option" event-proxy="emit: animationPause" text="value: Pause All"></a-entity>
+               
+              </a-entity>
+
+            </a-entity> -->
+
+      <!-- Environment -->
+      <!-- <a-entity gltf-model="url(https://icmproject.s3.eu-west-1.amazonaws.com/webxr_threejs_example/navmesh.glb)" nav-mesh></a-entity> -->
+
+      <a-assets timeout="30000">
+        <!-- Model source: https://sketchfab.com/3d-models/spinosaurus-2135501583704537907645bf723685e7
+             Model author: https://sketchfab.com/VapTor
+             Model license: CC Attribution -->
+        <!-- <a-asset-item id="spinosaurus" src="https://cdn.glitch.com/324a5290-5aa7-4efc-92d6-ae0736433b12%2Fspinosaurus.glb" response-type="arraybuffer"></a-asset-item> -->
+        
+        <a-asset-item id="fish" src="https://icmproject.s3.eu-west-1.amazonaws.com/webxr_threejs_example/fish.glb" response-type="arraybuffer"></a-asset-item>
+        <a-asset-item id="underwater" src="https://icmproject.s3.eu-west-1.amazonaws.com/webxr_threejs_example/underwaterScene.glb" response-type="arraybuffer"></a-asset-item>
+        <a-asset-item id="shark" src="https://icmproject.s3.eu-west-1.amazonaws.com/webxr_threejs_example/shark.glb" response-type="arraybuffer"></a-asset-item>
+        
+        <!-- <a-entity id="spinosaurus" 
+        fbx-model=”src: url(https://icmproject.s3.eu-west-1.amazonaws.com/webxr_threejs_example/Goldfish.fbx);” >
+        </a-entity> -->
+    
+    </a-assets>
+<!-- 
+    <a-entity oculus-touch-controls="hand: left" thumbstick-logging x-button-listener></a-entity>
+    <a-entity oculus-touch-controls="hand: right" thumbstick-logging x-button-listener></a-entity> -->
+
+    <!-- <a-entity hand-controls laser-controls raycaster=" lineColor: red; lineOpacity: 0.5"></a-entity>
+ -->
+
+    <!-- <a-entity oculus-touch-controls x-button-listener></a-entity>
+    <a-entity oculus-touch-controls x-button-listener></a-entity> -->
+
+
+    <!-- <a-entity raycaster="objects: .clickable" cursor></a-entity>
+
+    <a-entity class="clickable" geometry="primitive: box" position="1 0 0"></a-entity>
+    <a-entity class="not-clickable" geometry="primitive: sphere" position="-1 0 0"></a-entity>
+     -->
+
+    <!-- <a-entity hand-controls laser-controls raycaster="far: 2"></a-entity> -->
+
+    
+    <!-- <a-entity raycaster="objects: .clickable" cursor></a-entity>
+<a-entity class="clickable" geometry="primitive: box" position="1 0 0"></a-entity>
+<a-entity class="not-clickable" geometry="primitive: sphere" position="-1 0 0"></a-entity>
+       -->
+      <!-- Environment for 2D and VR viewing. It's auto-hidden in AR mode. -->
+      <!-- <a-entity environment="preset: tron; lighting: none; shadow: none; lightPosition: 0 2.15 0"
+                hide-in-ar-mode>
+      </a-entity> -->
+
+       <a-entity environment="preset: default; skyType: color ;lighting: none; fog: 0; shadow: none; lightPosition: 0 0 0"
+                hide-in-ar-mode>
+      </a-entity>
+      
+      <a-entity light="type: ambient; intensity: 0.5;"></a-entity>
+      
+      <!-- <a-light type="directional"
+               light="castShadow: false;
+                      shadowMapHeight: 1024;
+                      shadowMapWidth: 1024;
+                      shadowCameraLeft: -7;
+                      shadowCameraRight: 5;
+                      shadowCameraBottom: -5;
+                      shadowCameraTop: 5;"
+               id="light"
+               target="dino"
+               position="-5 3 1.5"></a-light> -->
+
+      <!-- This shadow-receiving plane is only visible in AR mode. -->
+      <a-plane height="15" width="15" position="0 0 -3" rotation="-90 0 0"
+               shadow="receive: true"
+               ar-shadows="opacity: 0.3"
+               visible="false"></a-plane>
+      </a-scene>
+
+    <div id="text">
+      <h1>Swordfish</h1>
+    
+      <p>
+       Demo
+      </p>
+    
+    </div>
+    <script>
+      function moveSharkAuto() {
+        var currentPosition = document.getElementById('shark').setAttribute('position');
+        console.log("currentPositiojn",currentPosition);
+        var coords = {x:0,y:0,z:0};
+        tween = new TWEEN.Tween(coords, false) // Create a new tween that modifies 'coords'.
+		.to({x: 60, y: 20}, 10000) // Move to (300, 200) in 1 second.
+		.easing(TWEEN.Easing.Quadratic.InOut) // Use an easing function to make the animation smooth.
+		.onUpdate(() => {
+            //document.getElementById('sharkModel').setAttribute('position', {x: coords.y, y: coords.y, z:  coords.y});
+		})
+		.start() // Start the tween immediately.
+        requestAnimationFrame(animateManual);
+
+        // Create a timeline with default parameters
+        var tl = anime.timeline({
+        easing: 'easeOutExpo',
+        duration: 750
+        });
+
+      }
+      // Setup the animation loop.
+      function animateManual(time) {
+            tween.update(time)
+            //console.log("animate shark")
+            requestAnimationFrame(animateManual)
+      }
+      //moveSharkAuto()
+      
+      function setSize(scale) {
+        document.getElementById('sharkModel').setAttribute('scale', {x: scale, y: scale, z: scale});
+      }
+      function moveSharkUpOrDown(pos) {
+        document.getElementById('container').emit('positionEvent');
+        // var currentPosition = document.getElementById('sharkModel').setAttribute('position');
+        // document.getElementById('shark').setAttribute('position', {x: currentPosition.x, y: currentPosition.y, z: parseFloat(currentPosition.z) + parseFloat(pos)});
+      }
+      function moveSharkLeftOrRight(pos) {
+        document.getElementById('container').emit('animationPause');
+        // var currentPosition = document.getElementById('sharkModel').setAttribute('position');
+        // document.getElementById('shark').setAttribute('position', {x: currentPosition.x, y:  parseFloat(currentPosition.y) + parseFloat(pos), z: currentPosition.z});
+      }
+      // document.getElementById('btn_full').onclick = setSize.bind(this, 1);
+      // document.getElementById('btn_half').onclick = setSize.bind(this, 0.5);
+      // document.getElementById('btn_quarter').onclick = setSize.bind(this, 0.25);
+
+      function start() {
+        document.getElementById('container').emit('positionEvent');
+        console.log("start");
+        // var currentPosition = document.getElementById('sharkModel').setAttribute('position');
+        // document.getElementById('shark').setAttribute('position', {x: currentPosition.x, y: currentPosition.y, z: parseFloat(currentPosition.z) + parseFloat(pos)});
+      }
+      const myTimeout = setTimeout(start, 10000);
+    </script>
+  </body>
+</html>
+
+
+
+
+
+<!-- 
+
+      <a-entity geometry="primitive: box"  position="0 0 -5" material="color: black"
+      animation__color="property: components.material.material.color; type: color; dir: alternate; dur: 1000;
+                        easing: easeInSine; loop: true; to: #FFF">
+</a-entity>
+
+<a-entity geometry="primitive: box" position="0 4 -5" material="color: orange; transparent: true"
+      animation__fadein="property: components.material.material.opacity; dur: 100; easing: linear; from: 0; to: 1; startEvents: fadein"
+      animation__fadeout="property: components.material.material.opacity; dur: 100; easing: linear; from: 1; to: 0; startEvents: fadeout">
+</a-entity> -->
+
+
+<!-- 
+<a-cylinder color="#F55"  position="4 0 -5" radius="0.1"
+        animation="property: components.material.material.color; type: color; dir: alternate; dur: 1000;
+                   easing: easeInSine; loop: true; to: #5F5"
+        animation__scale="property: scale; dir: alternate; dur: 200;
+                   easing: easeInSine; loop: true; to: 1.2 1 1.2"
+        animation__yoyo="property: position; dir: alternate; dur: 1000;
+                         easing: easeInSine; loop: true; to: 0 2 0">
+</a-cylinder> -->
+
+
+
+
+
+
+      <!-- <a-cylinder id="piston" color="#F55" radius="0.1"
+                    animation__scale="property: scale; dir: alternate; dur: 200; delay: 2000;
+                                      easing: easeInSine; loop: true; to: 1.2 1 1.2"
+                    animation__color="property: color; dir: alternate; dur: 1000;
+                                      easing: easeInSine; loop: true; to: #5F5"
+                    animation__yoyo="property: position; dir: alternate; dur: 1000;
+                                     easing: easeInSine; loop: true; to: 0 2 0">
+        </a-cylinder> -->
+      
+   
+
+      <!-- <a-entity id="underwaterscene" position="0 0 0" scale="1 1 1">
+        <a-entity  position="0 0 0" rotation="0 0 0"
+                  gltf-model="#underwater"
+                  animation-mixer
+                  shadow="cast: false; receive: false">
+        </a-entity>
+      </a-entity>  -->
+
+
+      <!-- <a-entity id="sharkModel" position="-12 3 -32" scale="2 2 2">
+        <a-entity  position="0 0 0" rotation="0 55 0"
+                  gltf-model="#shark"
+                  animation-mixer
+
+                  animation__yoyo="property: position; dir: alternate; dur: 10000;
+                         easing: easeInSine; loop: true; to: 30 0 0"
+
+                 
+                  animation__rotate="property: rotation; dir: alternate; dur: 10000;
+                        easing: easeInSine; loop: true; to: 0 90 90; startEvents: position;  pauseEvents: animationPause;
+                        resumeEvents: animationResume; restartEvents: animationRestart " 
+
+                  shadow="cast: false; receive: false">
+        </a-entity>
+    </a-entity>  -->
+
+    
+
+      <!-- <a-sphere src="https://raw.githubusercontent.com/aframevr/sample-assets/master/assets/images/space/earth_atmos_4096.jpg" radius="2" 
+            segments-height="84">
+      </a-sphere>  -->
