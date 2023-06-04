@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Creature Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    img {
+      max-width: 400px;
+      margin-bottom: 10px;
+    }
+    .details {
+      margin-bottom: 10px;
+    }
+    .details strong {
+      width: 100px;
+      display: inline-block;
+    }
+    .attacks {
+      margin-bottom: 10px;
+    }
+    .special-abilities {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Frostclaw Details</h1>
+  <div id="frostclaw-list"></div>
+
+  <script>
+    var frostclawList = document.getElementById("frostclaw-list");
+
+    // Fetch JSON data from the URL
+    fetch("https://www.realityoverlay.com/creaturegenerator/output3.json")
+      .then(response => response.json())
+      .then(data => {
+        // Create cards for each Frostclaw item
+        (data.all).forEach(item => {
+          var card = document.createElement("div");
+          card.className = "card";
+
+          var name = document.createElement("h2");
+          name.textContent = item.name;
+          card.appendChild(name);
+
+          var image = document.createElement("img");
+          image.src = item.image_url;
+          image.alt = item.name;
+          card.appendChild(image);
+
+          
+      var description = document.createElement("div");
+      description.className = "details";
+      description.innerHTML = "<strong>Description:</strong> " + item.description;
+      card.appendChild(description);
+
+      var ac = document.createElement("div");
+      ac.className = "details";
+      ac.innerHTML = "<strong>Armor Class:</strong> " + item.ac;
+      card.appendChild(ac);
+
+      var hitpoints = document.createElement("div");
+      hitpoints.className = "details";
+      hitpoints.innerHTML = "<strong>Hit Points:</strong> " + item.hitpoints;
+      card.appendChild(hitpoints);
+
+      var speed = document.createElement("div");
+      speed.className = "details";
+      speed.innerHTML = "<strong>Speed:</strong> " + item.speed;
+      card.appendChild(speed);
+
+      var strength = document.createElement("div");
+      strength.className = "details";
+      strength.innerHTML = "<strong>Strength:</strong> " + item.strength;
+      card.appendChild(strength);
+
+      var dexterity = document.createElement("div");
+      dexterity.className = "details";
+      dexterity.innerHTML = "<strong>Dexterity:</strong> " + item.dexterity;
+      card.appendChild(dexterity);
+
+      var constitution = document.createElement("div");
+      constitution.className = "details";
+      constitution.innerHTML = "<strong>Constitution:</strong> " + item.constitution;
+      card.appendChild(constitution);
+
+      var intelligence = document.createElement("div");
+      intelligence.className = "details";
+      intelligence.innerHTML = "<strong>Intelligence:</strong> " + item.intelligence;
+      card.appendChild(intelligence);
+
+      var wisdom = document.createElement("div");
+      wisdom.className = "details";
+      wisdom.innerHTML = "<strong>Wisdom:</strong> " + item.wisdom;
+      card.appendChild(wisdom);
+
+      var charisma = document.createElement("div");
+      charisma.className = "details";
+      charisma.innerHTML = "<strong>Charisma:</strong> " + item.charisma;
+      card.appendChild(charisma);
+
+      var attacks = document.createElement("div");
+      attacks.className = "attacks";
+      var attacksHTML = "<h3>Attacks</h3><ul>";
+      item.attacks.forEach(function(attack) {
+        attacksHTML += "<li><strong>" + attack.name + ":</strong> Damage: " + attack.damage + ", Reach: " + attack.reach + "</li>";
+      });
+      attacksHTML += "</ul>";
+      attacks.innerHTML = attacksHTML;
+      card.appendChild(attacks);
+
+      var specialAbilities = document.createElement("div");
+      specialAbilities.className = "special-abilities";
+      var abilitiesHTML = "<h3>Special Abilities</h3><ul>";
+      item.specialAbilities.forEach(function(ability) {
+        abilitiesHTML += "<li><strong>" + ability.name + ":</strong> " + ability.description + "</li>";
+      });
+      abilitiesHTML += "</ul>";
+      specialAbilities.innerHTML = abilitiesHTML;
+      card.appendChild(specialAbilities);
+
+
+          frostclawList.appendChild(card);
+        });
+      })
+      .catch(error => {
+        console.log("Error fetching JSON data:", error);
+      });
+  </script>
+</body>
+</html>
